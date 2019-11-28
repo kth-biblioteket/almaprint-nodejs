@@ -1,0 +1,19 @@
+{
+  "name": "kthb-almaprint-nodejs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chokidar": "^3.3.0",
+    "dotenv": "^8.2.0",
+    "mailparser": "^2.7.6",
+    "node-printer-lp-complete": "^1.0.1",
+    "puppeteer": "^2.0.0",
+    "winston": "^3.2.1"
+  }
+}
