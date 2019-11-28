@@ -100,7 +100,7 @@ watcher
                 parsed.html = parsed.html.replace("</style>",`@font-face
                         {
                             font-family: Code39AzaleaFont;
-                            src: url('${appdir + printdir}fonts/Code39Azalea.ttf') format('truetype')
+                            src: url('${appdir + printdir}fonts/Code39Azalea.ttf') format('truetype');
                             font-weight: normal;
                             font-style: normal;
                         }
