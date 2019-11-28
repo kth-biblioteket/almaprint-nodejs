@@ -148,15 +148,15 @@ watcher
                 } else {
                     logger.log('info','pdf copied to history');
                     fs.unlink(appdir + maildir + path,function (error) {
-                        if (error) if (error) logger.log('error',`unlink error: ${error}`);
+                        if (error) logger.log('error',`unlink error: ${error}`);
                         logger.log('info','File ' + appdir + maildir + path + ' removed successfully.');
                     });
                     fs.unlink(appdir + printdir + path + '.pdf',function (error) {
-                        if (error) if (error) logger.log('error',`unlink error: ${error}`);
+                        if (error) logger.log('error',`unlink error: ${error}`);
                         logger.log('info','File ' + appdir + printdir + path + '.pdf' + ' removed successfully.');
                     });
                     fs.unlink(appdir + printdir + path + '.html',function (error) {
-                        if (error) if (error) logger.log('error',`unlink error: ${error}`);
+                        if (error) logger.log('error',`unlink error: ${error}`);
                         logger.log('info','File ' + appdir + printdir + path + '.html' + ' removed successfully.');
                     });
                 }
@@ -170,21 +170,28 @@ watcher
                 fitplot: true
             };
             /*
-            var file = appdir + "almaprint/alma_print.pdf";
+            var file = appdir +  printdir + path + '.pdf';
             var jobFile = printer.printFile(file, printoptions, "alma_print");
 
             var onJobEnd = function () {
-                //TODO Logger
-                console.log(this.identifier + ", job send to printer queue");
-                //ta bort mailfilen
-                fs.unlink(path,function (err) {
-                    if (err) throw err;
-                    console.log('File ' + path + ' removed successfully.');
+                logger.log('info', this.identifier + ", job sent to printer queue");
+                //ta bort filer
+                fs.unlink(appdir + maildir + path,function (error) {
+                    if (error) logger.log('error',`unlink error: ${error}`);
+                    logger.log('info','File ' + appdir + maildir + path + ' removed successfully.');
+                });
+                fs.unlink(appdir + printdir + path + '.pdf',function (error) {
+                    if (error) logger.log('error',`unlink error: ${error}`);
+                    logger.log('info','File ' + appdir + printdir + path + '.pdf' + ' removed successfully.');
+                });
+                fs.unlink(appdir + printdir + path + '.html',function (error) {
+                    if (error) logger.log('error',`unlink error: ${error}`);
+                    logger.log('info','File ' + appdir + printdir + path + '.html' + ' removed successfully.');
                 });
             };
 
             var onJobError = function (message) {
-                console.log(this.identifier + ", error: " + message);
+                logger.log('error', this.identifier + ", error: " + message);
             };
 
             jobFile.on("end", onJobEnd);
