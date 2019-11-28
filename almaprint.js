@@ -58,7 +58,8 @@ const printhistorydir = process.env.PRINTHISTORYDIR;
 var printformat = process.env.PRINTFORMAT;
 var printername;
 
-const watcher = chokidar.watch(appdir + maildir,{
+const watcher = chokidar.watch(".", {
+    cwd: appdir + maildir,
     ignored: /node_modules|\.git|\.DS_Store/,
     persistent: true,
     ignoreInitial: false,
@@ -71,10 +72,13 @@ logger.log('info',"almaprintserver started")
 watcher
 .on('error', error => logger.log('error',`Watcher error: ${error}`))
 .on('add', async path => {
-    logger.log('info',`File ${path} has been added`);
+    logger.log('info',`File ${appdir + maildir + path} has been added`);
     try {
-        let source = fs.createReadStream(path);
-        var readyfile = await source.on('open', async function () {
+        let source = fs.createReadStream(appdir + maildir + path);
+        source.on('error', function(error) {
+            logger.log('error',`open file error: ${error}`)
+        });
+        source.on('open', async function () {
             let parsed = await simpleParser(source);
             switch (parsed.to.text) {
                 case process.env.HBEMAIL:
@@ -118,7 +122,7 @@ watcher
                 }
             }
             //Skapa pdf från HTML(email)
-            fs.writeFile(appdir + printdir + 'test.html', parsed.html, function(error){ if (error) logger.log('error',`Watcher error: ${error}`) });
+            fs.writeFile(appdir + printdir + path + '.html', parsed.html, function(error){ if (error) logger.log('error',`Watcher error: ${error}`) });
 
             const browser = await puppeteer.launch({ headless: true });
             const page = await browser.newPage();
@@ -128,17 +132,28 @@ watcher
             page.on('pageerror', error=> {
                 logger.log('error',`chromium pageerror: ${error}`)
             })
-            await page.goto('file://' + appdir + printdir + 'test.html');
-            await page.pdf({ format: printformat, path: appdir + printdir + 'alma_print.pdf' });
+            await page.goto('file://' + appdir + printdir + path + '.html');
+            await page.pdf({ format: printformat, path: appdir + printdir + path + '.pdf' });
             await browser.close();
 
-            fs.copyFile(appdir +  printdir + 'alma_print.pdf', appdir + printhistorydir +  'alma_print' + '_'+ Date.now() +'.pdf', (error) => {
-                if (error) if (error) logger.log('error',`conyfile error: ${error}`);
-                logger.log('info','pdf copied to history');
-                fs.unlink(path,function (error) {
-                    if (error) if (error) logger.log('error',`unlink error: ${error}`);
-                    logger.log('info','File ' + path + ' removed successfully.');
-                });
+            fs.copyFile(appdir +  printdir + path + '.pdf', appdir + printhistorydir +  path + '_'+ Date.now() +'.pdf', (error) => {
+                if (error) { 
+                    logger.log('error',`copyfile error: ${error}`);
+                } else {
+                    logger.log('info','pdf copied to history');
+                    fs.unlink(appdir + maildir + path,function (error) {
+                        if (error) if (error) logger.log('error',`unlink error: ${error}`);
+                        logger.log('info','File ' + appdir + maildir + path + ' removed successfully.');
+                    });
+                    fs.unlink(appdir + printdir + path + '.pdf',function (error) {
+                        if (error) if (error) logger.log('error',`unlink error: ${error}`);
+                        logger.log('info','File ' + appdir + maildir + path + ' removed successfully.');
+                    });
+                    fs.unlink(appdir + printdir + path + '.html',function (error) {
+                        if (error) if (error) logger.log('error',`unlink error: ${error}`);
+                        logger.log('info','File ' + appdir + maildir + path + ' removed successfully.');
+                    });
+                }
             });
             
 
