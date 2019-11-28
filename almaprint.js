@@ -21,8 +21,8 @@ require('dotenv').config()
 const fs = require('fs');
 const simpleParser = require('mailparser').simpleParser;
 const puppeteer = require('puppeteer')
-var chokidar = require('chokidar');
-var printer = require ("node-printer-lp-complete");
+const chokidar = require('chokidar');
+const printer = require ("node-printer-lp-complete");
 const winston = require('winston');
 const timezoned = () => {
     var options = {
@@ -50,14 +50,12 @@ const logger = winston.createLogger({
       new winston.transports.File({ filename: 'combined.log' })
     ]
 });
-
 const appdir = process.env.APPDIR;
 const maildir = process.env.MAILDIR;
 const printdir = process.env.PRINTDIR;
 const printhistorydir = process.env.PRINTHISTORYDIR;
 var printformat = process.env.PRINTFORMAT;
 var printername;
-
 const watcher = chokidar.watch(".", {
     cwd: appdir + maildir,
     ignored: /node_modules|\.git|\.DS_Store/,
@@ -68,16 +66,22 @@ const watcher = chokidar.watch(".", {
         pollInterval: 100
     },
 });
-logger.log('info',"almaprintserver started")
+
+logger.log('info',"almaprintserver started");
+
 watcher
 .on('error', error => logger.log('error',`Watcher error: ${error}`))
+
 .on('add', async path => {
     logger.log('info',`File ${appdir + maildir + path} has been added`);
+
     try {
         let source = fs.createReadStream(appdir + maildir + path);
+
         source.on('error', function(error) {
             logger.log('error',`open file error: ${error}`)
         });
+
         source.on('open', async function () {
             let parsed = await simpleParser(source);
             switch (parsed.to.text) {
@@ -96,10 +100,7 @@ watcher
                 parsed.html = parsed.html.replace("</style>",`@font-face
                         {
                             font-family: Code39AzaleaFont;
-                            src: url('http://azalea.com/web-fonts/Code39Azalea.eot') format('embedded-opentype'),
-                            url('http://azalea.com/web-fonts/Code39Azalea.woff') format('woff'),
-                            url('${appdir + printdir}fonts/Code39Azalea.ttf') format('truetype'),
-                            url('http://azalea.com/web-fonts/Code39Azalea.svg#Code39Azalea') format('svg');
+                            src: url('${appdir + printdir}fonts/Code39Azalea.ttf') format('truetype')
                             font-weight: normal;
                             font-style: normal;
                         }
@@ -116,24 +117,29 @@ watcher
                 printformat = "A4";
             }
             if(parsed.subject == "Resource Request" || parsed.subject == "Transit" || parsed.subject == "Cash Receipt" || parsed.subject == "Kvitto") {
-                printformat = "A5"; //Slipar ska skrivas ut på A5 för att spara papper.
+                printformat = "A5";
                 if(parsed.to.text == process.env.TELGEEMAIL) {
                     printformat = "A4" //Telge har bara ett fack i sin skrivare för närvarande.
                 }
             }
             //Skapa pdf från HTML(email)
             fs.writeFile(appdir + printdir + path + '.html', parsed.html, function(error){ if (error) logger.log('error',`Watcher error: ${error}`) });
-
+            
             const browser = await puppeteer.launch({ headless: true });
             const page = await browser.newPage();
+            
             page.on('error', error=> {
                 logger.log('error',`chromium browser error at page: ${error}`)
             });
+            
             page.on('pageerror', error=> {
                 logger.log('error',`chromium pageerror: ${error}`)
             })
+            
             await page.goto('file://' + appdir + printdir + path + '.html');
+            
             await page.pdf({ format: printformat, path: appdir + printdir + path + '.pdf' });
+            
             await browser.close();
 
             fs.copyFile(appdir +  printdir + path + '.pdf', appdir + printhistorydir +  path + '_'+ Date.now() +'.pdf', (error) => {
@@ -156,16 +162,14 @@ watcher
                 }
             });
             
-
             //Skriv ut
-            /*
             var printoptions = {
                 //media: 'a5',
                 destination: printername,
                 n: 1,
                 fitplot: true
             };
-
+            /*
             var file = appdir + "almaprint/alma_print.pdf";
             var jobFile = printer.printFile(file, printoptions, "alma_print");
 
