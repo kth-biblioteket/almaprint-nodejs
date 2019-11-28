@@ -147,11 +147,11 @@ watcher
                     });
                     fs.unlink(appdir + printdir + path + '.pdf',function (error) {
                         if (error) if (error) logger.log('error',`unlink error: ${error}`);
-                        logger.log('info','File ' + appdir + maildir + path + ' removed successfully.');
+                        logger.log('info','File ' + appdir + printdir + path + '.pdf' + ' removed successfully.');
                     });
                     fs.unlink(appdir + printdir + path + '.html',function (error) {
                         if (error) if (error) logger.log('error',`unlink error: ${error}`);
-                        logger.log('info','File ' + appdir + maildir + path + ' removed successfully.');
+                        logger.log('info','File ' + appdir + printdir + path + '.html' + ' removed successfully.');
                     });
                 }
             });
