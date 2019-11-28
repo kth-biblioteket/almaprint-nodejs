@@ -116,14 +116,19 @@ watcher
                     </style>`);
                 printformat = "A4";
             }
-            if(parsed.subject == "Resource Request" || parsed.subject == "Transit" || parsed.subject == "Cash Receipt" || parsed.subject == "Kvitto") {
+            if(parsed.subject == "Resource Request" 
+            || parsed.subject == "Transit" 
+            || parsed.subject == "Cash Receipt" 
+            || parsed.subject == "Kvitto") {
                 printformat = "A5";
                 if(parsed.to.text == process.env.TELGEEMAIL) {
                     printformat = "A4" //Telge har bara ett fack i sin skrivare för närvarande.
                 }
             }
             //Skapa pdf från HTML(email)
-            fs.writeFile(appdir + printdir + path + '.html', parsed.html, function(error){ if (error) logger.log('error',`Watcher error: ${error}`) });
+            fs.writeFile(appdir + printdir + path + '.html', parsed.html, function(error){ 
+                if (error) logger.log('error',`Watcher error: ${error}`) 
+            });
             
             const browser = await puppeteer.launch({ headless: true });
             const page = await browser.newPage();
