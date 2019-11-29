@@ -147,6 +147,7 @@ watcher
             
             await browser.close();
 
+            /*
              //Skriv ut
              var printoptions = {
                 //media: 'a5',
@@ -187,6 +188,7 @@ watcher
                     jobFile.on("error", onJobError);
                 }
             });
+            */
         });
     } catch(e) {
         logger.log('error', `${e}`);
