@@ -146,12 +146,23 @@ watcher
             await page.pdf({ format: printformat, path: appdir + printdir + path + '.pdf' });
             
             await browser.close();
+            //Skriv ut
+            var printoptions = {
+                //media: 'a5',
+                destination: printername,
+                n: 1,
+                fitplot: true
+            };
+
+            var file = appdir +  printdir + path + '.pdf';
+            var jobFile = printer.printFile(file, printoptions, "alma_print");
 
             fs.copyFile(appdir +  printdir + path + '.pdf', appdir + printhistorydir +  path + '_'+ Date.now() +'.pdf', (error) => {
                 if (error) { 
                     logger.log('error',`copyfile error: ${error}`);
                 } else {
                     logger.log('info','pdf copied to history');
+
                     fs.unlink(appdir + maildir + path,function (error) {
                         if (error) logger.log('error',`unlink error: ${error}`);
                         logger.log('info','File ' + appdir + maildir + path + ' removed successfully.');
@@ -167,13 +178,7 @@ watcher
                 }
             });
             
-            //Skriv ut
-            var printoptions = {
-                //media: 'a5',
-                destination: printername,
-                n: 1,
-                fitplot: true
-            };
+            
             /*
             var file = appdir +  printdir + path + '.pdf';
             var jobFile = printer.printFile(file, printoptions, "alma_print");
