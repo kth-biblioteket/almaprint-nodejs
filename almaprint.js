@@ -173,6 +173,14 @@ watcher
                             if (error) logger.log('error',`unlink error: ${error}`);
                             logger.log('info','File ' + appdir + printdir + path + '.pdf' + ' removed successfully.');
                         });
+                    }
+                });
+                fs.copyFile(appdir +  printdir + path + '.html', appdir + printhistorydir +  path + '_'+ Date.now() +'.html', (error) => {
+                    if (error) { 
+                        logger.log('error',`copyfile error: ${error}`);
+                    } else {
+                        logger.log('info', appdir +  printdir + path + '.html copied to' + appdir + printhistorydir +  path);
+
                         fs.unlink(appdir + printdir + path + '.html',function (error) {
                             if (error) logger.log('error',`unlink error: ${error}`);
                             logger.log('info','File ' + appdir + printdir + path + '.html' + ' removed successfully.');
