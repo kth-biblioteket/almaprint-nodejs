@@ -126,69 +126,82 @@ watcher
                 }
             }
             //Skapa pdf från HTML(email)
-            fs.writeFile(appdir + printdir + path + '.html', parsed.html, async function(error){ 
+            fs.writeFile(appdir + printdir + path + '.html', parsed.html, function(error){ 
                 if (error) logger.log('error',`Watcher error: ${error}`) 
-            
-                const browser = await puppeteer.launch({ headless: true });
-                const page = await browser.newPage();
-                
-                page.on('error', error=> {
-                    logger.log('error',`chromium browser error at page: ${error}`)
-                });
-                
-                page.on('pageerror', error=> {
-                    logger.log('error',`chromium pageerror: ${error}`)
-                })
-                
-                await page.goto('file://' + appdir + printdir + path + '.html');
-                
-                await page.pdf({ format: printformat, path: appdir + printdir + path + '.pdf' });
-                
-                await browser.close();
-
-                /*
-                //Skriv ut
-                var printoptions = {
-                    //media: 'a5',
-                    destination: printername,
-                    n: 1,
-                    fitplot: true
-                };
-
-                fs.copyFile(appdir +  printdir + path + '.pdf', appdir + printhistorydir +  path + '_'+ Date.now() +'.pdf', (error) => {
-                    if (error) { 
-                        logger.log('error',`copyfile error: ${error}`);
-                    } else {
-                        logger.log('info','pdf copied to history');
-                        var file = appdir +  printdir + path + '.pdf';
-                        var jobFile = printer.printFile(file, printoptions, "alma_print");
-
-                        var onJobEnd = function () {
-                            logger.log('info', this.identifier + ", job sent to printer queue");
-                            //ta bort filer
-                            fs.unlink(appdir + maildir + path,function (error) {
-                                if (error) logger.log('error',`unlink error: ${error}`);
-                                logger.log('info','File ' + appdir + maildir + path + ' removed successfully.');
-                            });
-                            fs.unlink(appdir + printdir + path + '.pdf',function (error) {
-                                if (error) logger.log('error',`unlink error: ${error}`);
-                                logger.log('info','File ' + appdir + printdir + path + '.pdf' + ' removed successfully.');
-                            });
-                            fs.unlink(appdir + printdir + path + '.html',function (error) {
-                                if (error) logger.log('error',`unlink error: ${error}`);
-                                logger.log('info','File ' + appdir + printdir + path + '.html' + ' removed successfully.');
-                            });
-                        };
-                        var onJobError = function (message) {
-                            logger.log('error', this.identifier + ", error: " + message);
-                        };
-            
-                        jobFile.on("end", onJobEnd);
-                        jobFile.on("error", onJobError);
-                    }
-                });
-                */
             });
+            
+            const browser = await puppeteer.launch({ headless: true });
+            const page = await browser.newPage();
+            
+            page.on('error', error=> {
+                logger.log('error',`chromium browser error at page: ${error}`)
+            });
+            
+            page.on('pageerror', error=> {
+                logger.log('error',`chromium pageerror: ${error}`)
+            })
+            
+            await page.goto('file://' + appdir + printdir + path + '.html');
+            
+            await page.pdf({ format: printformat, path: appdir + printdir + path + '.pdf' });
+            
+            await browser.close();
+
+            fs.copyFile(appdir +  printdir + path + '.pdf', appdir + printhistorydir +  path + '_'+ Date.now() +'.pdf', (error) => {
+                if (error) { 
+                    logger.log('error',`copyfile error: ${error}`);
+                } else {
+                    logger.log('info','pdf copied to history');
+                    fs.unlink(appdir + maildir + path,function (error) {
+                        if (error) logger.log('error',`unlink error: ${error}`);
+                        logger.log('info','File ' + appdir + maildir + path + ' removed successfully.');
+                    });
+                    fs.unlink(appdir + printdir + path + '.pdf',function (error) {
+                        if (error) logger.log('error',`unlink error: ${error}`);
+                        logger.log('info','File ' + appdir + printdir + path + '.pdf' + ' removed successfully.');
+                    });
+                    fs.unlink(appdir + printdir + path + '.html',function (error) {
+                        if (error) logger.log('error',`unlink error: ${error}`);
+                        logger.log('info','File ' + appdir + printdir + path + '.html' + ' removed successfully.');
+                    });
+                }
+            });
+            
+            //Skriv ut
+            var printoptions = {
+                //media: 'a5',
+                destination: printername,
+                n: 1,
+                fitplot: true
+            };
+            /*
+            var file = appdir +  printdir + path + '.pdf';
+            var jobFile = printer.printFile(file, printoptions, "alma_print");
+
+            var onJobEnd = function () {
+                logger.log('info', this.identifier + ", job sent to printer queue");
+                //ta bort filer
+                fs.unlink(appdir + maildir + path,function (error) {
+                    if (error) logger.log('error',`unlink error: ${error}`);
+                    logger.log('info','File ' + appdir + maildir + path + ' removed successfully.');
+                });
+                fs.unlink(appdir + printdir + path + '.pdf',function (error) {
+                    if (error) logger.log('error',`unlink error: ${error}`);
+                    logger.log('info','File ' + appdir + printdir + path + '.pdf' + ' removed successfully.');
+                });
+                fs.unlink(appdir + printdir + path + '.html',function (error) {
+                    if (error) logger.log('error',`unlink error: ${error}`);
+                    logger.log('info','File ' + appdir + printdir + path + '.html' + ' removed successfully.');
+                });
+            };
+
+            var onJobError = function (message) {
+                logger.log('error', this.identifier + ", error: " + message);
+            };
+
+            jobFile.on("end", onJobEnd);
+            jobFile.on("error", onJobError);
+            */
         });
     } catch(e) {
         logger.log('error', `${e}`);
