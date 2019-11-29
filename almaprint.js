@@ -6,11 +6,11 @@
  *
  * HBkontorskrivare = "\\PRINT05\KTHB_DOK_AF_MPC2550"
  * Huvudbiblioteketbackofficeskrivare = "\\PRINT05\ECE_KTHB_BACKOFFICE"
- * sudo lpadmin -p alma-hb -v smb://user:password@ug.kth.se/print05.ug.kth.se/ECE_KTHB_BACKOFFICE
+ * sudo lpadmin -p alma-hb -v smb://user:password@ug.kth.se/print05.ug.kth.se/ECE_KTHB_BACKOFFICE -E
  * Kistaskrivare = "\\print06\ICT-Bibliotek"
- * sudo lpadmin -p alma-kista -v smb://user:password@ug.kth.se/print06.ug.kth.se/ICT-Bibliotek
+ * sudo lpadmin -p alma-kista -v smb://user:password@ug.kth.se/print06.ug.kth.se/ICT-Bibliotek -E
  * Telgeskrivare = ?? Har det satts upp någon ännu???
- * sudo lpadmin -p alma-telge -v smb://user:password@ug.kth.se/xxxxxx.ug.kth.se/XXXXXXXXXXXXX
+ * sudo lpadmin -p alma-telge -v smb://user:password@ug.kth.se/xxxxxx.ug.kth.se/XXXXXXXXXXXXX -E
  * Kvittoskrivare = ?? Används inte...
  * 
  * 
@@ -158,11 +158,12 @@ watcher
             var jobFile = printer.printFile(file, printoptions, "alma_print");
 
             var onJobEnd = function () {
+                logger.log('info',`Printed file ${file} successfully`);
                 fs.copyFile(appdir +  printdir + path + '.pdf', appdir + printhistorydir +  path + '_'+ Date.now() +'.pdf', (error) => {
                     if (error) { 
                         logger.log('error',`copyfile error: ${error}`);
                     } else {
-                        logger.log('info','pdf copied to history');
+                        logger.log('info', appdir +  printdir + path + '.pdf copied to' + appdir + printhistorydir +  path);
 
                         fs.unlink(appdir + maildir + path,function (error) {
                             if (error) logger.log('error',`unlink error: ${error}`);
