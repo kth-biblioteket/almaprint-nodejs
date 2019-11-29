@@ -126,7 +126,7 @@ watcher
                 }
             }
             //Skapa pdf från HTML(email)
-            fs.writeFile(appdir + printdir + path + '.html', parsed.html, function(error){ 
+            fs.writeFile(appdir + printdir + path + '.html', parsed.html, async function(error){ 
                 if (error) logger.log('error',`Watcher error: ${error}`) 
             
                 const browser = await puppeteer.launch({ headless: true });
