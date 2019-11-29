@@ -155,7 +155,7 @@ watcher
             };
 
             var file = appdir +  printdir + path + '.pdf';
-            var jobFile = printer.printFile(file, printoptions, "alma_print");
+            var jobFile = await printer.printFile(file, printoptions, "alma_print");
 
             fs.copyFile(appdir +  printdir + path + '.pdf', appdir + printhistorydir +  path + '_'+ Date.now() +'.pdf', (error) => {
                 if (error) { 
