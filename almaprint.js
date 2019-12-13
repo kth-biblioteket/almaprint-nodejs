@@ -1,18 +1,4 @@
-/**
- * 
- * NodeJS-tjänst för att hantera utskrifter från Alma
- * 
- * Skrivare som måste sättas upp i Ubuntu:
- *
- * HBkontorskrivare = "\\PRINT05\KTHB_DOK_AF_MPC2550"
- * Huvudbiblioteketbackofficeskrivare = "\\PRINT05\ECE_KTHB_BACKOFFICE"
- * sudo lpadmin -p alma-hb -v smb://user:password@ug.kth.se/print05.ug.kth.se/ECE_KTHB_BACKOFFICE -E
- * Kistaskrivare = "\\print06\ICT-Bibliotek"
- * sudo lpadmin -p alma-kista -v smb://user:password@ug.kth.se/print06.ug.kth.se/ICT-Bibliotek -E
- * Telgeskrivare = ?? Har det satts upp någon ännu???
- * sudo lpadmin -p alma-telge -v smb://user:password@ug.kth.se/xxxxxx.ug.kth.se/XXXXXXXXXXXXX -E
- * Kvittoskrivare = ?? Används inte...
- * 
+/*
  * 
  * TODO
  * Felhantering 
@@ -55,6 +41,12 @@ const maildir = process.env.MAILDIR;
 const printdir = process.env.PRINTDIR;
 const printhistorydir = process.env.PRINTHISTORYDIR;
 var printformat = process.env.PRINTFORMAT;
+var printmargin = { 
+    top: process.env.PRINTMARGINTOP, 
+    right: process.env.PRINTMARGINRIGHT, 
+    bottom: process.env.PRINTMARGINBOTTOM, 
+    left: process.env.PRINTMARGINLEFT
+};
 var printername;
 const watcher = chokidar.watch(".", {
     cwd: appdir + maildir,
@@ -144,7 +136,7 @@ watcher
             
             await page.goto('file://' + appdir + printdir + path + '.html');
             
-            await page.pdf({ format: printformat, path: appdir + printdir + path + '.pdf' });
+            await page.pdf({ format: printformat, path: appdir + printdir + path + '.pdf', margin: printmargin });
             
             await browser.close();
             //Skriv ut
