@@ -77,9 +77,10 @@ const watcher = chokidar.watch(".", {
 });
 var incomingmailcontent = "";
 
-logger.log('info',"almaprintserver started");
-mailmessage.text = `almaprintserver started`;
-mailmessage.html = `<p>almaprintserver started</p>`;
+logger.log('info',"Alma Print service started");
+mailmessage.subject = `Alma Printing`;
+mailmessage.text = `Alma Print service started`;
+mailmessage.html = `<p>Alma Print service started</p>`;
 transporter.sendMail(mailmessage, (error, info) => {
     if (error) {
         return logger.log('error',error);
