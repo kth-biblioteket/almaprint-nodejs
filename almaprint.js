@@ -10,6 +10,23 @@ const puppeteer = require('puppeteer')
 const chokidar = require('chokidar');
 const printer = require ("node-printer-lp-complete");
 const winston = require('winston');
+const nodemailer = require('nodemailer');
+const transporter = nodemailer.createTransport({
+    port: 25,
+    host: 'localhost',
+    tls: {
+      rejectUnauthorized: false
+    },
+});
+var mailmessage = {
+    from: 'kthb@alma.lib.kth.se',
+    to: 'tholind@kth.se',
+    subject: 'Error Alma Printing',
+    text: '',
+    html: ''
+};
+var send_error_mail = false;
+
 const timezoned = () => {
     var options = {
         year: "numeric",
@@ -58,8 +75,17 @@ const watcher = chokidar.watch(".", {
         pollInterval: 100
     },
 });
+var incomingmailcontent = "";
 
 logger.log('info',"almaprintserver started");
+mailmessage.text = `almaprintserver started`;
+mailmessage.html = `<p>almaprintserver started</p>`;
+transporter.sendMail(mailmessage, (error, info) => {
+    if (error) {
+        return logger.log('error',error);
+    }
+    logger.log('info','Message sent: %s', info.messageId);
+});
 
 watcher
 .on('error', error => logger.log('error',`Watcher error: ${error}`))
@@ -71,7 +97,10 @@ watcher
         let source = fs.createReadStream(appdir + maildir + path);
 
         source.on('error', function(error) {
-            logger.log('error',`open file error: ${error}`)
+            logger.log('error',`open mail file error: ${error}`)
+            mailmessage.text = `open mail file error: ${error}`;
+            mailmessage.html = `<p>open mail file error: ${error}</p>`;
+
         });
 
         source.on('open', async function () {
@@ -118,9 +147,18 @@ watcher
                     printformat = "A4" //Telge har bara ett fack i sin skrivare för närvarande.
                 }
             }
-            //Skapa pdf från HTML(email)
-            fs.writeFile(appdir + printdir + path + '.html', parsed.html, function(error){ 
-                if (error) logger.log('error',`Watcher error: ${error}`) 
+            //Skapa pdf från email(HTML)
+            if(parsed.html) {
+                incomingmailcontent = parsed.html;
+            } else {
+                incomingmailcontent = parsed.text
+            }
+            fs.writeFile(appdir + printdir + path + '.html', incomingmailcontent, function(error){ 
+                if (error) {
+                    logger.log('error',`Watcher error: ${error}`)
+                    mailmessage.text = `Watcher error: ${error}`;
+                    mailmessage.html = `<p>Watcher error: ${error}</p>`;
+                }
             });
             
             const browser = await puppeteer.launch({ headless: true });
@@ -128,10 +166,14 @@ watcher
             
             page.on('error', error=> {
                 logger.log('error',`chromium browser error at page: ${error}`)
+                mailmessage.text = `chromium browser error at page: ${error}`;
+                mailmessage.html = `<p>chromium browser error at page: ${error}</p>`;
             });
             
             page.on('pageerror', error=> {
                 logger.log('error',`chromium pageerror: ${error}`)
+                mailmessage.text = `chromium pageerror: ${error}`;
+                mailmessage.html = `<p>chromium pageerror: ${error}</p>`;
             })
             
             await page.goto('file://' + appdir + printdir + path + '.html');
@@ -154,16 +196,26 @@ watcher
                 logger.log('info',`Printed file ${file} successfully`);
                 fs.copyFile(appdir +  printdir + path + '.pdf', appdir + printhistorydir +  path + '_'+ Date.now() +'.pdf', (error) => {
                     if (error) { 
-                        logger.log('error',`copyfile error: ${error}`);
+                        logger.log('error',`copyfile pdf error: ${error}`);
+                        mailmessage.text = `copyfile pdf error: ${error}`;
+                        mailmessage.html = `<p>copyfile pdf error: ${error}</p>`;
                     } else {
                         logger.log('info', appdir +  printdir + path + '.pdf copied to' + appdir + printhistorydir +  path);
 
                         fs.unlink(appdir + maildir + path,function (error) {
-                            if (error) logger.log('error',`unlink error: ${error}`);
+                            if (error) {
+                                logger.log('error',`unlink error: ${error}`);
+                                mailmessage.text = `unlink error: ${error}`;
+                                mailmessage.html = `<p>unlink error: ${error}</p>`;
+                            }
                             logger.log('info','File ' + appdir + maildir + path + ' removed successfully.');
                         });
                         fs.unlink(appdir + printdir + path + '.pdf',function (error) {
-                            if (error) logger.log('error',`unlink error: ${error}`);
+                            if (error) {
+                                logger.log('error',`unlink pdf error: ${error}`);
+                                mailmessage.text = `unlink pdf error: ${error}`;
+                                mailmessage.html = `<p>unlink pdf error: ${error}</p>`;
+                            }
                             logger.log('info','File ' + appdir + printdir + path + '.pdf' + ' removed successfully.');
                         });
                     }
@@ -171,15 +223,29 @@ watcher
                 fs.copyFile(appdir +  printdir + path + '.html', appdir + printhistorydir +  path + '_'+ Date.now() +'.html', (error) => {
                     if (error) { 
                         logger.log('error',`copyfile error: ${error}`);
+                        mailmessage.text = `copyfile html error: ${error}`;
+                        mailmessage.html = `<p>copyfile html error: ${error}</p>`;
                     } else {
                         logger.log('info', appdir +  printdir + path + '.html copied to' + appdir + printhistorydir +  path);
 
                         fs.unlink(appdir + printdir + path + '.html',function (error) {
-                            if (error) logger.log('error',`unlink error: ${error}`);
+                            if (error) {
+                                logger.log('error',`unlink error: ${error}`);
+                                mailmessage.text = `unlink html error: ${error}`;
+                                mailmessage.html = `<p>unlink html error: ${error}</p>`;
+                            }
                             logger.log('info','File ' + appdir + printdir + path + '.html' + ' removed successfully.');
                         });
                     }
                 });
+                if (mailmessage.html != "") {
+                    transporter.sendMail(mailmessage, (error, info) => {
+                        if (error) {
+                            return logger.log('error',error);
+                        }
+                        logger.log('info','Message sent: %s', info.messageId);
+                    });
+                }
             };
             var onJobError = function (message) {
                 logger.log('error', this.identifier + ", error: " + message);
