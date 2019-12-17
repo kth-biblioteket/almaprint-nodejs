@@ -93,29 +93,37 @@ watcher
 
 .on('add', async path => {
     logger.log('info',`File ${appdir + maildir + path} has been added`);
+    let source = fs.createReadStream(appdir + maildir + path);
 
-    try {
-        let source = fs.createReadStream(appdir + maildir + path);
+    source.on('error', function(error) {
+        logger.log('error',`open mail file error: ${error}`)
+        mailmessage.text = `open mail file error: ${error}`;
+        mailmessage.html = `<p>open mail file error: ${error}</p>`;
 
-        source.on('error', function(error) {
-            logger.log('error',`open mail file error: ${error}`)
-            mailmessage.text = `open mail file error: ${error}`;
-            mailmessage.html = `<p>open mail file error: ${error}</p>`;
+    });
 
-        });
-
-        source.on('open', async function () {
+    source.on('open', async function () {
+        try {
             let parsed = await simpleParser(source);
-            switch (parsed.to.text) {
-                case process.env.HBEMAIL:
-                    printername = process.env.HBPRINTER;
-                case process.env.KISTAEMAIL:
-                    printername = process.env.KISTAPRINTER;
-                case process.env.TELGEEMAIL:
-                    printername = process.env.TELGEPRINTER;
-                default:
-                    printername = process.env.HBPRINTER;
+            if(typeof parsed.to !== 'undefined') {
+                switch (parsed.to.text) {
+                    case process.env.HBEMAIL:
+                        printername = process.env.HBPRINTER;
+                        break;
+                    case process.env.KISTAEMAIL:
+                        printername = process.env.KISTAPRINTER;
+                        break;
+                    case process.env.TELGEEMAIL:
+                        printername = process.env.TELGEPRINTER;
+                        break;
+                    default:
+                        printername = process.env.HBPRINTER;
+                        break;
+                }
+            } else {
+                printername = process.env.HBPRINTER;
             }
+
 
             //Se till att låntagarens barcode kommer med på fakturautskriften
             if(parsed.subject == "Lost Items Bill" || parsed.subject == "Lost Item Bill" || parsed.subject == "Räkning för borttappat material") {
@@ -161,7 +169,7 @@ watcher
                     mailmessage.html = `<p>Watcher error: ${error}</p>`;
                 }
             });
-            
+        
             const browser = await puppeteer.launch({ headless: true });
             const page = await browser.newPage();
             
@@ -254,9 +262,19 @@ watcher
 
             jobFile.on("end", onJobEnd);
             jobFile.on("error", onJobError);
-        });
-    } catch(e) {
-        logger.log('error', `${e}`);
-    }
+        } catch(e) {
+            logger.log('error', `${e}`);
+            mailmessage.text = ` general error: ${error}`;
+            mailmessage.html = `<p>general error: ${error}</p>`;
+            if (mailmessage.html != "") {
+                transporter.sendMail(mailmessage, (error, info) => {
+                    if (error) {
+                        return logger.log('error',error);
+                    }
+                    logger.log('info','Message sent: %s', info.messageId);
+                });
+            }
+        }
+    });
 })
 .on('remove', async path => {logger.log('info','File ' + path + ' removed.');});
