@@ -1,7 +1,5 @@
 /*
  * 
- * TODO
- * Felhantering 
  */
 require('dotenv').config()
 const fs = require('fs');
@@ -18,10 +16,10 @@ const transporter = nodemailer.createTransport({
       rejectUnauthorized: false
     },
 });
-var mailmessage = {
-    from: 'kthb@alma.lib.kth.se',
-    to: 'tholind@kth.se',
-    subject: 'Error Alma Printing',
+var outgoing_mail_message = {
+    from: process.env.OUTGOINGEMAILFROM,
+    to: process.env.OUTGOINGEMAILTO,
+    subject: 'Alma Printing',
     text: '',
     html: ''
 };
@@ -77,36 +75,40 @@ const watcher = chokidar.watch(".", {
 });
 var incomingmailcontent = "";
 
+function sendemail(message) {
+    transporter.sendMail(message, (error, info) => {
+        if (error) {
+            return logger.log('error',error);
+        }
+        logger.log('info',`Email message sent to: ${message.to}, ${info.messageId}`);
+    });
+}
+
 logger.log('info',"Alma Print service started");
-mailmessage.subject = `Alma Printing`;
-mailmessage.text = `Alma Print service started`;
-mailmessage.html = `<p>Alma Print service started</p>`;
-transporter.sendMail(mailmessage, (error, info) => {
-    if (error) {
-        return logger.log('error',error);
-    }
-    logger.log('info','Message sent: %s', info.messageId);
-});
-mailmessage.text = ``;
-mailmessage.html = ``;
+outgoing_mail_message.text = `Alma Print service started`;
+outgoing_mail_message.html = `<p>Alma Print service started</p>`;
+sendemail(outgoing_mail_message);
 
 watcher
 .on('error', error => logger.log('error',`Watcher error: ${error}`))
 
+//Process som startas varje gång ett mail mottagits(fil adderats i mailfolder)
 .on('add', async path => {
+    outgoing_mail_message.text = ``;
+    outgoing_mail_message.html = ``;
     logger.log('info',`File ${appdir + maildir + path} has been added`);
     let source = fs.createReadStream(appdir + maildir + path);
 
     source.on('error', function(error) {
         logger.log('error',`open mail file error: ${error}`)
-        mailmessage.text = `open mail file error: ${error}`;
-        mailmessage.html = `<p>open mail file error: ${error}</p>`;
-
+        outgoing_mail_message.text = `open mail file error: ${error}`;
+        outgoing_mail_message.html = `<p>open mail file error: ${error}</p>`;
     });
 
     source.on('open', async function () {
         try {
             let parsed = await simpleParser(source);
+            //Definiera skrivare beroende på avsändare
             if(typeof parsed.to !== 'undefined') {
                 switch (parsed.to.text) {
                     case process.env.HBEMAIL:
@@ -125,7 +127,6 @@ watcher
             } else {
                 printername = process.env.HBPRINTER;
             }
-
 
             //Se till att låntagarens barcode kommer med på fakturautskriften
             if(parsed.subject == "Lost Items Bill" || parsed.subject == "Lost Item Bill" || parsed.subject == "Räkning för borttappat material") {
@@ -149,6 +150,7 @@ watcher
                 </head>`);
                 printformat = "A4";
             }
+            //Definiera pappersstorlek beroende på typ av letter
             if(parsed.subject == "Resource Request" 
             || parsed.subject == "Transit" 
             || parsed.subject == "Cash Receipt" 
@@ -158,7 +160,8 @@ watcher
                     printformat = "A4" //Telge har bara ett fack i sin skrivare för närvarande.
                 }
             }
-            //Skapa pdf från email(HTML)
+
+            //Skapa html-fil från mailet
             if(parsed.html) {
                 incomingmailcontent = parsed.html;
             } else {
@@ -167,32 +170,34 @@ watcher
             fs.writeFile(appdir + printdir + path + '.html', incomingmailcontent, function(error){ 
                 if (error) {
                     logger.log('error',`Watcher error: ${error}`)
-                    mailmessage.text = `Watcher error: ${error}`;
-                    mailmessage.html = `<p>Watcher error: ${error}</p>`;
+                    outgoing_mail_message.text = `Watcher error: ${error}`;
+                    outgoing_mail_message.html = `<p>Watcher error: ${error}</p>`;
                 }
             });
         
+            //Öppna html-filen i chromium
             const browser = await puppeteer.launch({ headless: true });
             const page = await browser.newPage();
             
             page.on('error', error=> {
                 logger.log('error',`chromium browser error at page: ${error}`)
-                mailmessage.text = `chromium browser error at page: ${error}`;
-                mailmessage.html = `<p>chromium browser error at page: ${error}</p>`;
+                outgoing_mail_message.text = `chromium browser error at page: ${error}`;
+                outgoing_mail_message.html = `<p>chromium browser error at page: ${error}</p>`;
             });
             
             page.on('pageerror', error=> {
                 logger.log('error',`chromium pageerror: ${error}`)
-                mailmessage.text = `chromium pageerror: ${error}`;
-                mailmessage.html = `<p>chromium pageerror: ${error}</p>`;
+                outgoing_mail_message.text = `chromium pageerror: ${error}`;
+                outgoing_mail_message.html = `<p>chromium pageerror: ${error}</p>`;
             })
             
             await page.goto('file://' + appdir + printdir + path + '.html');
-            
+            //Skapa pdf-fil
             await page.pdf({ format: printformat, path: appdir + printdir + path + '.pdf', margin: printmargin });
             
             await browser.close();
-            //Skriv ut
+
+            //Skriv ut pdf-fil
             var printoptions = {
                 //media: 'a5',
                 destination: printername,
@@ -205,27 +210,28 @@ watcher
 
             var onJobEnd = function () {
                 logger.log('info',`Printed file ${file} successfully`);
+                //Kopiera och ta bort filer
                 fs.copyFile(appdir +  printdir + path + '.pdf', appdir + printhistorydir +  path + '_'+ Date.now() +'.pdf', (error) => {
                     if (error) { 
                         logger.log('error',`copyfile pdf error: ${error}`);
-                        mailmessage.text = `copyfile pdf error: ${error}`;
-                        mailmessage.html = `<p>copyfile pdf error: ${error}</p>`;
+                        outgoing_mail_message.text = `copyfile pdf error: ${error}`;
+                        outgoing_mail_message.html = `<p>copyfile pdf error: ${error}</p>`;
                     } else {
                         logger.log('info', appdir +  printdir + path + '.pdf copied to' + appdir + printhistorydir +  path);
 
                         fs.unlink(appdir + maildir + path,function (error) {
                             if (error) {
                                 logger.log('error',`unlink error: ${error}`);
-                                mailmessage.text = `unlink error: ${error}`;
-                                mailmessage.html = `<p>unlink error: ${error}</p>`;
+                                outgoing_mail_message.text = `unlink error: ${error}`;
+                                outgoing_mail_message.html = `<p>unlink error: ${error}</p>`;
                             }
                             logger.log('info','File ' + appdir + maildir + path + ' removed successfully.');
                         });
                         fs.unlink(appdir + printdir + path + '.pdf',function (error) {
                             if (error) {
                                 logger.log('error',`unlink pdf error: ${error}`);
-                                mailmessage.text = `unlink pdf error: ${error}`;
-                                mailmessage.html = `<p>unlink pdf error: ${error}</p>`;
+                                outgoing_mail_message.text = `unlink pdf error: ${error}`;
+                                outgoing_mail_message.html = `<p>unlink pdf error: ${error}</p>`;
                             }
                             logger.log('info','File ' + appdir + printdir + path + '.pdf' + ' removed successfully.');
                         });
@@ -234,47 +240,43 @@ watcher
                 fs.copyFile(appdir +  printdir + path + '.html', appdir + printhistorydir +  path + '_'+ Date.now() +'.html', (error) => {
                     if (error) { 
                         logger.log('error',`copyfile error: ${error}`);
-                        mailmessage.text = `copyfile html error: ${error}`;
-                        mailmessage.html = `<p>copyfile html error: ${error}</p>`;
+                        outgoing_mail_message.text = `copyfile html error: ${error}`;
+                        outgoing_mail_message.html = `<p>copyfile html error: ${error}</p>`;
                     } else {
                         logger.log('info', appdir +  printdir + path + '.html copied to' + appdir + printhistorydir +  path);
 
                         fs.unlink(appdir + printdir + path + '.html',function (error) {
                             if (error) {
                                 logger.log('error',`unlink error: ${error}`);
-                                mailmessage.text = `unlink html error: ${error}`;
-                                mailmessage.html = `<p>unlink html error: ${error}</p>`;
+                                outgoing_mail_message.text = `unlink html error: ${error}`;
+                                outgoing_mail_message.html = `<p>unlink html error: ${error}</p>`;
                             }
                             logger.log('info','File ' + appdir + printdir + path + '.html' + ' removed successfully.');
                         });
                     }
                 });
-                if (mailmessage.html != "") {
-                    transporter.sendMail(mailmessage, (error, info) => {
-                        if (error) {
-                            return logger.log('error',error);
-                        }
-                        logger.log('info','Message sent: %s', info.messageId);
-                    });
+                //Skicka mail om något gått fel vid kopiering/ta bort
+                if (outgoing_mail_message.html != "") {
+                    sendemail(outgoing_mail_message);
                 }
             };
             var onJobError = function (message) {
                 logger.log('error', this.identifier + ", error: " + message);
+                outgoing_mail_message.text = `this.identifier + ", error: ${message}`;
+                outgoing_mail_message.html = `<p>this.identifier + ", error: ${message}`;
+                if (outgoing_mail_message.html != "") {
+                    sendemail(outgoing_mail_message);
+                }
             };
 
             jobFile.on("end", onJobEnd);
             jobFile.on("error", onJobError);
         } catch(e) {
             logger.log('error', `${e}`);
-            mailmessage.text = ` general error: ${error}`;
-            mailmessage.html = `<p>general error: ${error}</p>`;
-            if (mailmessage.html != "") {
-                transporter.sendMail(mailmessage, (error, info) => {
-                    if (error) {
-                        return logger.log('error',error);
-                    }
-                    logger.log('info','Message sent: %s', info.messageId);
-                });
+            outgoing_mail_message.text = ` general error: ${error}`;
+            outgoing_mail_message.html = `<p>general error: ${error}</p>`;
+            if (outgoing_mail_message.html != "") {
+                sendemail(outgoing_mail_message);
             }
         }
     });
