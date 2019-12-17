@@ -87,6 +87,8 @@ transporter.sendMail(mailmessage, (error, info) => {
     }
     logger.log('info','Message sent: %s', info.messageId);
 });
+mailmessage.text = ``;
+mailmessage.html = ``;
 
 watcher
 .on('error', error => logger.log('error',`Watcher error: ${error}`))
