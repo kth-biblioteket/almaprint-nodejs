@@ -131,20 +131,22 @@ watcher
 
             //Se till att låntagarens barcode kommer med på fakturautskriften
             if(parsed.subject == "Lost Items Bill" || parsed.subject == "Lost Item Bill" || parsed.subject == "Räkning för borttappat material") {
-                parsed.html = parsed.html.replace("</head>",`<style>@font-face
-                        {
+                parsed.html = parsed.html.replace("</head>",`<style>
+                        @font-face {
                             font-family: Code39AzaleaFont;
                             src: url('${appdir + printdir}fonts/Code39Azalea.ttf') format('truetype');
                             font-weight: normal;
                             font-style: normal;
                         }
-                        .patronbarcode, .itembarcode, #itembarcode {
+                        .patronbarcode, .itembarcode, #itembarcode,
+                        .patronbarcode1, .itembarcode1, #itembarcode1 {
                             display:block !important;
                             font-family:Code39AzaleaFont; 
                             font-size:40px;
                             visibility: visible !important;
                         }
-                        .patronbarcodenumbers{
+                        .patronbarcodenumbers,
+                        .patronbarcodenumbers1 {
                             display:block !important;
                         }
                     </style>
