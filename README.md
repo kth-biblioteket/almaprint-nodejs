@@ -10,6 +10,8 @@ Hanterar utskrifter från Alma (email)
         cups-client
         samba
         smbclient
+
+
     - Skrivare
         Huvudbiblioteket kontor plan3 = "\\PRINT05\KTHB_DOK_AF_MPC2550"
         Huvudbiblioteket backoffice = "\\PRINT05\ECE_KTHB_BACKOFFICE"
@@ -21,6 +23,11 @@ Hanterar utskrifter från Alma (email)
         sudo lpadmin -p alma-telge -v ipp://192.168.71.103/ipp/print -E -m everywhere
         Ta bort:
         sudo lpadmin -x skrivare
+
+        
+    - Postfix:
+        https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-postfix-on-ubuntu-18-04
+
 
 ### Används för xxxx
 
