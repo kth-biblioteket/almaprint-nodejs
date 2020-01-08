@@ -94,6 +94,7 @@ watcher
 
 //Process som startas varje gång ett mail mottagits(fil adderats i mailfolder)
 .on('add', async path => {
+    printformat = process.env.PRINTFORMAT;
     outgoing_mail_message.text = ``;
     outgoing_mail_message.html = ``;
     logger.log('info',`File ${appdir + maildir + path} has been added`);
