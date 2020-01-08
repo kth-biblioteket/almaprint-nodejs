@@ -3,7 +3,9 @@ Hanterar utskrifter från Alma (email)
 
 ## Funktioner
  NodeJS-tjänst för att hantera utskrifter från Alma
+
  Ubuntu-server(lib.kth.se):
+ 
     - Installera:
         postfix
         cups
@@ -24,7 +26,7 @@ Hanterar utskrifter från Alma (email)
         Ta bort:
         sudo lpadmin -x skrivare
 
-        
+
     - Postfix:
         https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-postfix-on-ubuntu-18-04
 
