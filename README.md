@@ -4,6 +4,10 @@ Hanterar utskrifter från Alma (email)
 ## Funktioner
  NodeJS-tjänst för att hantera utskrifter från Alma
 
+ Körs via PM2
+
+ - PM2 start almaprint.js
+
  Ubuntu-server(lib.kth.se):
  
     - Installera:
