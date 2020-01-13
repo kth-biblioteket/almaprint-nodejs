@@ -47,7 +47,6 @@ const logger = winston.createLogger({
     ),
     defaultMeta: { service: 'user-service' },
     transports: [
-      new winston.transports.File({ filename: 'error.log', level: 'error' }),
       new winston.transports.File({ filename: 'combined.log' })
     ]
 });
@@ -78,7 +77,7 @@ var incomingmailcontent = "";
 function sendemail(message) {
     transporter.sendMail(message, (error, info) => {
         if (error) {
-            return logger.log('error',error);
+            return logger.log('error',"sendemail: " + JSON.stringify(error));
         }
         logger.log('info',`Email message sent to: ${message.to}, ${info.messageId}`);
     });
@@ -90,14 +89,14 @@ outgoing_mail_message.html = `<p>Alma Print service started</p>`;
 sendemail(outgoing_mail_message);
 
 watcher
-.on('error', error => logger.log('error',`Watcher error: ${error}`))
+.on('error', error => logger.log('error',`watcher.on.error: ${error}`))
 
 //Process som startas varje gång ett mail mottagits(fil adderats i mailfolder)
 .on('add', async path => {
     printformat = process.env.PRINTFORMAT;
     outgoing_mail_message.text = ``;
     outgoing_mail_message.html = ``;
-    logger.log('info',`File ${appdir + maildir + path} has been added`);
+    logger.log('info',`watcher.on.add: File ${appdir + maildir + path} has been added`);
     let source = fs.createReadStream(appdir + maildir + path);
 
     source.on('error', function(error) {
@@ -172,7 +171,7 @@ watcher
             }
             fs.writeFile(appdir + printdir + path + '.html', incomingmailcontent, function(error){ 
                 if (error) {
-                    logger.log('error',`Watcher error: ${error}`)
+                    logger.log('error',`watcher.on.add.source.on.open.writefile: ${error}`)
                     outgoing_mail_message.text = `Watcher error: ${error}`;
                     outgoing_mail_message.html = `<p>Watcher error: ${error}</p>`;
                 }
@@ -183,13 +182,13 @@ watcher
             const page = await browser.newPage();
             
             page.on('error', error=> {
-                logger.log('error',`chromium browser error at page: ${error}`)
+                logger.log('error',`watcher.on.add.source.on.open.browser.page.on.error: ${error}`)
                 outgoing_mail_message.text = `chromium browser error at page: ${error}`;
                 outgoing_mail_message.html = `<p>chromium browser error at page: ${error}</p>`;
             });
             
             page.on('pageerror', error=> {
-                logger.log('error',`chromium pageerror: ${error}`)
+                logger.log('error',`watcher.on.add.source.on.open.browser.page.on.pagerror: ${error}`)
                 outgoing_mail_message.text = `chromium pageerror: ${error}`;
                 outgoing_mail_message.html = `<p>chromium pageerror: ${error}</p>`;
             })
@@ -209,14 +208,17 @@ watcher
             };
 
             var file = appdir +  printdir + path + '.pdf';
-            var jobFile = printer.printFile(file, printoptions, "alma_print");
+            if(process.env.OS == "linux") {
+                var jobFile = printer.printFile(file, printoptions, "alma_print");
+            } else {
+            }
 
             var onJobEnd = function () {
                 logger.log('info',`Printed file ${file} successfully`);
                 //Kopiera och ta bort filer
-                fs.copyFile(appdir +  printdir + path + '.pdf', appdir + printhistorydir +  path + '_'+ Date.now() +'.pdf', (error) => {
+                fs.copyFile(appdir +  printdir + path + '.pdf', appdir + printhistorydir +  path + '_' + parsed.to.text + '_' + Date.now() +'.pdf', (error) => {
                     if (error) { 
-                        logger.log('error',`copyfile pdf error: ${error}`);
+                        logger.log('error',`watcher.on.add.source.on.open.printer.onjobend.copyfile.pdf: failed, ${error}`);
                         outgoing_mail_message.text = `copyfile pdf error: ${error}`;
                         outgoing_mail_message.html = `<p>copyfile pdf error: ${error}</p>`;
                     } else {
@@ -224,7 +226,7 @@ watcher
 
                         fs.unlink(appdir + maildir + path,function (error) {
                             if (error) {
-                                logger.log('error',`unlink error: ${error}`);
+                                logger.log('error',`watcher.on.add.source.on.open.printer.onjobend.unlink.emailfile: ${error}`);
                                 outgoing_mail_message.text = `unlink error: ${error}`;
                                 outgoing_mail_message.html = `<p>unlink error: ${error}</p>`;
                             }
@@ -232,7 +234,7 @@ watcher
                         });
                         fs.unlink(appdir + printdir + path + '.pdf',function (error) {
                             if (error) {
-                                logger.log('error',`unlink pdf error: ${error}`);
+                                logger.log('error',`watcher.on.add.source.on.open.printer.onjobend.unlink.pdffile: ${error}`);
                                 outgoing_mail_message.text = `unlink pdf error: ${error}`;
                                 outgoing_mail_message.html = `<p>unlink pdf error: ${error}</p>`;
                             }
@@ -240,9 +242,9 @@ watcher
                         });
                     }
                 });
-                fs.copyFile(appdir +  printdir + path + '.html', appdir + printhistorydir +  path + '_'+ Date.now() +'.html', (error) => {
+                fs.copyFile(appdir +  printdir + path + '.html', appdir + printhistorydir +  path +  '_' + parsed.to.text + '_' + Date.now() +'.html', (error) => {
                     if (error) { 
-                        logger.log('error',`copyfile error: ${error}`);
+                        logger.log('error',`watcher.on.add.source.on.open.printer.onjobend.copyfile.html: ${error}`);
                         outgoing_mail_message.text = `copyfile html error: ${error}`;
                         outgoing_mail_message.html = `<p>copyfile html error: ${error}</p>`;
                     } else {
@@ -250,7 +252,7 @@ watcher
 
                         fs.unlink(appdir + printdir + path + '.html',function (error) {
                             if (error) {
-                                logger.log('error',`unlink error: ${error}`);
+                                logger.log('error',`watcher.on.add.source.on.open.printer.onjobend.unlink.htmlfile: ${error}`);
                                 outgoing_mail_message.text = `unlink html error: ${error}`;
                                 outgoing_mail_message.html = `<p>unlink html error: ${error}</p>`;
                             }
@@ -264,7 +266,7 @@ watcher
                 }
             };
             var onJobError = function (message) {
-                logger.log('error', this.identifier + ", error: " + message);
+                logger.log('error', "watcher.on.add.source.on.open.printer.onjoberror: " + this.identifier + ", " + message);
                 outgoing_mail_message.text = `this.identifier + ", error: ${message}`;
                 outgoing_mail_message.html = `<p>this.identifier + ", error: ${message}`;
                 if (outgoing_mail_message.html != "") {
@@ -272,10 +274,14 @@ watcher
                 }
             };
 
-            jobFile.on("end", onJobEnd);
-            jobFile.on("error", onJobError);
-        } catch(e) {
-            logger.log('error', `${e}`);
+            if(process.env.OS == "linux") {
+                jobFile.on("end", onJobEnd);
+                jobFile.on("error", onJobError);
+            } else {
+            }
+
+        } catch(error) {
+            logger.log('error', `.source.on.open.generalerror: ${error}`);
             outgoing_mail_message.text = ` general error: ${error}`;
             outgoing_mail_message.html = `<p>general error: ${error}</p>`;
             if (outgoing_mail_message.html != "") {
