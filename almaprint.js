@@ -216,13 +216,14 @@ watcher
             var onJobEnd = function () {
                 logger.log('info',`Printed file ${file} successfully`);
                 //Kopiera och ta bort filer
-                fs.copyFile(appdir +  printdir + path + '.pdf', appdir + printhistorydir +  path + '_' + parsed.to.text + '_' + Date.now() +'.pdf', (error) => {
+                var enddate = Date.now();
+                fs.copyFile(appdir +  printdir + path + '.pdf', appdir + printhistorydir +  path + '_' + parsed.to.text + '_' + enddate + '.pdf', (error) => {
                     if (error) { 
                         logger.log('error',`watcher.on.add.source.on.open.printer.onjobend.copyfile.pdf: failed, ${error}`);
                         outgoing_mail_message.text = `copyfile pdf error: ${error}`;
                         outgoing_mail_message.html = `<p>copyfile pdf error: ${error}</p>`;
                     } else {
-                        logger.log('info', appdir +  printdir + path + '.pdf copied to' + appdir + printhistorydir +  path);
+                        logger.log('info', appdir +  printdir + path + '.pdf copied to ' + appdir + printhistorydir +  path + '_' + parsed.to.text + '_' + enddate + '.pdf');
 
                         fs.unlink(appdir + maildir + path,function (error) {
                             if (error) {
@@ -242,13 +243,13 @@ watcher
                         });
                     }
                 });
-                fs.copyFile(appdir +  printdir + path + '.html', appdir + printhistorydir +  path +  '_' + parsed.to.text + '_' + Date.now() +'.html', (error) => {
+                fs.copyFile(appdir +  printdir + path + '.html', appdir + printhistorydir +  path +  '_' + parsed.to.text + '_' + enddate + '.html', (error) => {
                     if (error) { 
                         logger.log('error',`watcher.on.add.source.on.open.printer.onjobend.copyfile.html: ${error}`);
                         outgoing_mail_message.text = `copyfile html error: ${error}`;
                         outgoing_mail_message.html = `<p>copyfile html error: ${error}</p>`;
                     } else {
-                        logger.log('info', appdir +  printdir + path + '.html copied to' + appdir + printhistorydir +  path);
+                        logger.log('info', appdir +  printdir + path + '.html copied to ' + appdir + printhistorydir +  path +  '_' + parsed.to.text + '_' + enddate + '.html');
 
                         fs.unlink(appdir + printdir + path + '.html',function (error) {
                             if (error) {
