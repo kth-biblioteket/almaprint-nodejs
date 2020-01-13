@@ -110,14 +110,14 @@ watcher
             let parsed = await simpleParser(source);
             //Definiera skrivare beroende på avsändare
             if(typeof parsed.to !== 'undefined') {
-                switch (parsed.to.text) {
-                    case process.env.HBEMAIL:
+                switch (true) {
+                    case parsed.to.text.indexOf(process.env.HBEMAIL) !== -1:
                         printername = process.env.HBPRINTER;
                         break;
-                    case process.env.KISTAEMAIL:
+                    case parsed.to.text.indexOf(process.env.KISTAEMAIL) !== -1:
                         printername = process.env.KISTAPRINTER;
                         break;
-                    case process.env.TELGEEMAIL:
+                    case parsed.to.text.indexOf(process.env.TELGEEMAIL) !== -1:
                         printername = process.env.TELGEPRINTER;
                         break;
                     default:
