@@ -26,9 +26,13 @@ Hanterar utskrifter från Alma (email)
         sudo lpadmin -p alma-kista -v smb://user:password@ug.kth.se/print06.ug.kth.se/ICT-Bibliotek -E
         Telge = "192.168.71.103"
         sudo lpadmin -p alma-telge -v socket://192.168.71.103:9100/ -E
-        sudo lpadmin -p alma-telge -v ipp://192.168.71.103/ipp/print -E -m everywhere
+        (sudo lpadmin -p alma-telge -v ipp://192.168.71.103/ipp/print -E -m everywhere)
         Ta bort:
         sudo lpadmin -x skrivare
+        Lista:
+        lpstat -t
+        Enable:
+        cupsenable skrivare
 
 
     - Postfix:
