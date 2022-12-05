@@ -150,16 +150,16 @@ watcher
                         }
                     </style>
                 </head>`);
-                printformat = "A4";
+                printformat = process.env.PRINTFORMAT_INVOICE;
             }
             //Definiera pappersstorlek beroende på typ av letter
             if(parsed.subject == "Resource Request" 
             || parsed.subject == "Transit" 
             || parsed.subject == "Cash Receipt" 
             || parsed.subject == "Kvitto") {
-                printformat = "A5";
+                printformat = process.env.PRINTFORMAT;
                 if(parsed.to.text == process.env.TELGEEMAIL) {
-                    printformat = "A4" //Telge har bara ett fack i sin skrivare för närvarande.
+                    printformat = process.env.PRINTFORMAT_TELGE //Telge har bara ett fack i sin skrivare för närvarande.
                 }
             }
 

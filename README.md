@@ -7,6 +7,7 @@ Hanterar utskrifter från Alma (email)
  Körs via PM2
 
  - PM2 start almaprint.js
+ - PM2 save
 
  Ubuntu-server(lib.kth.se):
  
@@ -39,7 +40,36 @@ Hanterar utskrifter från Alma (email)
         https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-postfix-on-ubuntu-18-04
 
 
-### Används för xxxx
+### Environment Variables
+
+.env
+
+```sh
+ENVIRONMENT=development (development, production etc)
+OS=linux (operativsystem: linux, windows etc)
+APPDIR=/folder/folder/ (sökväg till tjänsten)
+PRINTDIR=almaprint/ (sökväg till utskriftsmapp)
+PRINTHISTORYDIR=almaprint/history/ (sökväg till historik)
+PRINTFORMAT=A5 (utskriftsformat: A4, A5 etc)
+PRINTFORMAT_INVOICE=A4
+PRINTFORMAT_TELGE=A5
+PRINTMARGINTOP=1.00cm (utskriftsmarginal)
+PRINTMARGINRIGHT=1.00cm (utskriftsmarginal)
+PRINTMARGINBOTTOM=1.00cm (utskriftsmarginal)
+PRINTMARGINLEFT=1.00cm (utskriftsmarginal)
+MAILDIR=Maildir/new/ (sökväg till mail)
+HBPRINTER=xxxxxx (namn på skrivare)
+KISTAPRINTER=xxxxxx (namn på skrivare)
+TELGEPRINTER=xxxxxx (namn på skrivare)
+HBEMAIL=xxxxxx@xxx.lib.kth.se
+KISTAEMAIL=xxxxxx@xxx.lib.kth.se
+TELGEEMAIL=xxxxxx@xxx.lib.kth.se
+SMTP_HOST=localhost (smtp-server)
+MAILFROM_NAME=Xxxxxx Xxxxxx (avsändarnamn)
+MAILFROM_ADDRESS=noreply@xxx.lib.kth.se (avsändaremail)
+MAILFROM_SUBJECT=Alma Printing (ämne för mail)
+MAILTO_ADDRESS=xxxxxxxx@kth.se (email adress till support/admin)
+```
 
 ### Bla bla bla
 
